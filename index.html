@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Syarat Khusus</title>
+
+<style>
+:root{
+  --primary:#2d6cdf;
+  --bg:#dd680fd0;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:system-ui;
+  background:var(--bg);
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* HEADER */
+.header{
+  height:56px;
+  display:flex;
+  align-items:center;
+  padding:0 16px;
+  background:white;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+
+.back-btn{
+  font-size:20px;
+  cursor:pointer;
+  display:none;
+}
+
+.title{
+  margin-left:12px;
+  font-weight:600;
+}
+
+/* SCREENS */
+.screen{
+  padding:20px;
+}
+
+/* HOME GRID */
+.home{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  padding-top:30px;
+}
+
+.ekstra-btn{
+  padding:18px 10px;
+  font-size:15px;
+  border:none;
+  border-radius:18px;
+  background:white;
+  color:#333;
+  font-weight:600;
+  box-shadow:0 4px 10px rgba(0,0,0,0.06);
+  cursor:pointer;
+  transition:.15s ease;
+}
+
+.ekstra-btn:active{
+  transform:scale(0.96);
+  box-shadow:0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* STUDENT LIST */
+.student{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:white;
+  padding:16px;
+  border-radius:14px;
+  margin-bottom:14px;
+  box-shadow:0 3px 10px rgba(0,0,0,0.05);
+}
+
+.info{
+  display:flex;
+  flex-direction:column;
+}
+
+.name{
+  font-size:16px;
+  font-weight:600;
+}
+
+.kelas{
+  font-size:13px;
+  color:#777;
+  margin-top:4px;
+}
+
+/* SWITCH */
+.switch{
+  position:relative;
+  width:56px;
+  height:30px;
+}
+
+.switch input{
+  display:none;
+}
+
+.slider{
+  position:absolute;
+  cursor:pointer;
+  background:#ccc;
+  border-radius:30px;
+  top:0; left:0; right:0; bottom:0;
+  transition:.3s;
+}
+
+.slider:before{
+  content:"";
+  position:absolute;
+  height:22px;
+  width:22px;
+  left:4px;
+  bottom:4px;
+  background:white;
+  border-radius:50%;
+  transition:.3s;
+  box-shadow:0 2px 4px rgba(0,0,0,0.2);
+}
+
+input:checked + .slider{
+  background:var(--primary);
+}
+
+input:checked + .slider:before{
+  transform:translateX(26px);
+}
+
+.loading{
+  text-align:center;
+  padding:40px;
+  color:#888;
+}
+/* FOOTER */
+.mainFooter{
+  margin-top:40px;
+  background:white;
+  border-top:1px solid #e5e7eb;
+  padding:28px 16px;
+}
+
+.footerContent{
+  text-align:center;
+  max-width:500px;
+  margin:auto;
+}
+
+.footerTitle{
+  font-size:15px;
+  font-weight:600;
+  color:#333;
+  margin-bottom:6px;
+}
+
+.footerSub{
+  font-size:14px;
+  color:#555;
+  margin-bottom:10px;
+}
+
+.footerNote{
+  font-size:13px;
+  color:#777;
+  margin-bottom:18px;
+  line-height:1.5;
+}
+
+.footerSignature{
+  font-size:12px;
+  color:#999;
+  border-top:1px dashed #e5e7eb;
+  padding-top:12px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="back-btn" id="backBtn">←</div>
+  <div class="title" id="headerTitle">Sistem kendali tugas khusus siswa</div>
+</div>
+
+<div class="screen home" id="screenHome"></div>
+
+<div class="screen" id="screenList" style="display:none;">
+  <div id="studentList"></div>
+</div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbx33aFCfQSa_gH_5h_-Qlq-OcifA5TWh9OBTEI4am3wr5UC7EyDhsFoaCYLott2iC45/exec";
+let allData = [];
+let activeEkstra = "";
+
+async function loadData(){
+  const res = await fetch(API);
+  allData = await res.json();
+  buildHome();
+}
+
+function buildHome(){
+  const home = document.getElementById("screenHome");
+  home.innerHTML = "";
+
+  const ekstras = [...new Set(allData.map(s => s.ekstra).filter(e => e))];
+
+  ekstras.forEach(e=>{
+    const btn = document.createElement("button");
+    btn.className = "ekstra-btn";
+    btn.textContent = e;
+
+    btn.onclick = ()=>{
+      activeEkstra = e;
+      openList();
+    };
+
+    home.appendChild(btn);
+  });
+}
+
+function openList(){
+  document.getElementById("screenHome").style.display = "none";
+  document.getElementById("screenList").style.display = "block";
+  document.getElementById("backBtn").style.display = "block";
+  document.getElementById("headerTitle").textContent = activeEkstra;
+
+  renderStudents();
+}
+
+function goBack(){
+  document.getElementById("screenHome").style.display = "grid";
+  document.getElementById("screenList").style.display = "none";
+  document.getElementById("backBtn").style.display = "none";
+  document.getElementById("headerTitle").textContent = "Pilih Ekstra";
+}
+
+document.getElementById("backBtn").onclick = goBack;
+
+function renderStudents(){
+  const container = document.getElementById("studentList");
+  container.innerHTML = "";
+
+  const filtered = allData.filter(s => s.ekstra === activeEkstra);
+
+  if(filtered.length === 0){
+    container.innerHTML = `<div class="loading">Tidak ada siswa</div>`;
+    return;
+  }
+
+  filtered.forEach(student=>{
+    const div = document.createElement("div");
+    div.className = "student";
+
+    div.innerHTML = `
+      <div class="info">
+        <div class="name">${student.nama}</div>
+        <div class="kelas">${student.kelas}</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" ${student.syaratKhusus === true ? "checked" : ""}>
+        <span class="slider"></span>
+      </label>
+    `;
+
+    const checkbox = div.querySelector("input");
+
+    checkbox.addEventListener("change", async ()=>{
+      checkbox.disabled = true;
+
+      await fetch(API, {
+        method:"POST",
+        body: JSON.stringify({
+          action:"toggleSyarat",
+          nama: student.nama
+        })
+      });
+
+      await loadData();
+      renderStudents();
+    });
+
+    container.appendChild(div);
+  });
+}
+
+loadData();
+document.getElementById("year").textContent = new Date().getFullYear();
+</script>
+<footer class="mainFooter">
+  <div class="footerContent">
+    <div class="footerTitle">
+      Sistem kendali tugas khusus siswa
+    </div>
+
+    <div class="footerSub">
+      SMK Diponegoro Tumpang
+    </div>
+
+    <div class="footerNote">
+      Dikembangkan oleh.
+    </div>
+
+    <div class="footerSignature">
+  © <span id="year"></span> Chusnul Khitam Azza,S.Kom
+</div>
+</body>
+</html>
