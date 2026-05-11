@@ -74,6 +74,43 @@ body{
   box-shadow:0 2px 6px rgba(0,0,0,0.08);
 }
 
+/* SEARCH BAR */
+.search-wrap{
+  position:relative;
+  margin-bottom:16px;
+}
+
+.search-wrap::before{
+  content:"🔍";
+  position:absolute;
+  left:14px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:15px;
+  pointer-events:none;
+}
+
+#searchInput{
+  width:100%;
+  padding:12px 14px 12px 40px;
+  border:none;
+  border-radius:14px;
+  font-size:15px;
+  background:white;
+  box-shadow:0 3px 10px rgba(0,0,0,0.07);
+  outline:none;
+  color:#333;
+  transition:.2s;
+}
+
+#searchInput:focus{
+  box-shadow:0 3px 12px rgba(45,108,223,0.2);
+}
+
+#searchInput::placeholder{
+  color:#aaa;
+}
+
 /* STUDENT LIST */
 .student{
   display:flex;
@@ -148,6 +185,7 @@ input:checked + .slider:before{
   padding:40px;
   color:#888;
 }
+
 /* FOOTER */
 .mainFooter{
   margin-top:40px;
@@ -200,6 +238,9 @@ input:checked + .slider:before{
 <div class="screen home" id="screenHome"></div>
 
 <div class="screen" id="screenList" style="display:none;">
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="Cari nama siswa...">
+  </div>
   <div id="studentList"></div>
 </div>
 
@@ -240,6 +281,9 @@ function openList(){
   document.getElementById("backBtn").style.display = "block";
   document.getElementById("headerTitle").textContent = activeEkstra;
 
+  // Clear search on open
+  document.getElementById("searchInput").value = "";
+
   renderStudents();
 }
 
@@ -252,14 +296,25 @@ function goBack(){
 
 document.getElementById("backBtn").onclick = goBack;
 
+// Search live filter
+document.getElementById("searchInput").addEventListener("input", ()=>{
+  renderStudents();
+});
+
 function renderStudents(){
   const container = document.getElementById("studentList");
   container.innerHTML = "";
 
-  const filtered = allData.filter(s => s.ekstra === activeEkstra);
+  const query = document.getElementById("searchInput").value.trim().toLowerCase();
+
+  let filtered = allData.filter(s => s.ekstra === activeEkstra);
+
+  if(query){
+    filtered = filtered.filter(s => s.nama.toLowerCase().includes(query));
+  }
 
   if(filtered.length === 0){
-    container.innerHTML = `<div class="loading">Tidak ada siswa</div>`;
+    container.innerHTML = `<div class="loading">${query ? "Siswa tidak ditemukan" : "Tidak ada siswa"}</div>`;
     return;
   }
 
